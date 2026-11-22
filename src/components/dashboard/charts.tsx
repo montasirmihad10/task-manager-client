@@ -18,11 +18,19 @@ import { normalizeTaskStats } from "@/lib/taskStats";
 
 export default function Charts({
   workspaceId,
+  platformScope = false,
 }: {
   workspaceId?: string | null;
+  /** When true (platform admin), aggregate every workspace */
+  platformScope?: boolean;
 }) {
   const { data: statsResult, isLoading } = useGetTaskStatsQuery(
-    workspaceId ? { workspaceId } : undefined,
+    platformScope
+      ? { scope: "platform" }
+      : workspaceId
+        ? { workspaceId, scope: "workspace" }
+        : undefined,
+    { skip: !platformScope && !workspaceId },
   );
   const taskStats = normalizeTaskStats(statsResult?.data ?? statsResult);
   const total = taskStats.reduce((sum, s) => sum + s.count, 0);
@@ -56,7 +64,7 @@ export default function Charts({
         <div className="mb-4 flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Pipeline
+              {platformScope ? "Platform pipeline" : "Pipeline"}
             </p>
             <h2 className="font-display text-lg font-semibold text-ink">
               Volume by stage

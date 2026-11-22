@@ -20,8 +20,6 @@
 /dist
 
 # Environment & secrets (never commit)
-.env
-.env.*
 !.env.example
 *.pem
 *.p12
@@ -45,7 +43,6 @@ yarn-error.log*
 # OS / editor
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
 *.suo
 *.ntvs*
@@ -61,3 +58,4 @@ Thumbs.db
 *.old
 *.legacy.*
 .vercel
+config.bat

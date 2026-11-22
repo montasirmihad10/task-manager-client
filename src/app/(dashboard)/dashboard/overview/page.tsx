@@ -14,6 +14,7 @@ import Charts from "@/components/dashboard/charts";
 import { useGetTaskStatsQuery } from "@/redux/api/taskApi";
 import {
   useGetBillingStatusQuery,
+  useGetPlatformSummaryQuery,
   useGetWorkspaceSummaryQuery,
 } from "@/redux/api/workspaceApi";
 import { useWorkspace } from "@/context/WorkspaceContext";
@@ -33,20 +34,46 @@ const ICONS: Record<string, ReactNode> = {
 };
 
 export default function OverviewPage() {
-  const { workspaceId, workspace, role, canManage } = useWorkspace();
+  const { workspaceId, workspace, role, canManage, isPlatformAdmin } =
+    useWorkspace();
   const { data: billingResult } = useGetBillingStatusQuery(undefined);
   const billing = billingResult?.data as
     | { isFreeProduct?: boolean; currentPlan?: string }
     | undefined;
 
+  const { data: platformResult, isLoading: platformLoading } =
+    useGetPlatformSummaryQuery(undefined, { skip: !isPlatformAdmin });
+
   const { data: summaryResult, isLoading: summaryLoading } =
-    useGetWorkspaceSummaryQuery(workspaceId || "", { skip: !workspaceId });
+    useGetWorkspaceSummaryQuery(workspaceId || "", {
+      skip: !workspaceId || isPlatformAdmin,
+    });
 
   const { data: statsResult, isLoading, isError, isFetching, refetch } =
     useGetTaskStatsQuery(
-      workspaceId ? { workspaceId } : undefined,
-      { refetchOnMountOrArgChange: true },
+      isPlatformAdmin
+        ? { scope: "platform" }
+        : workspaceId
+          ? { workspaceId, scope: "workspace" }
+          : undefined,
+      {
+        skip: !isPlatformAdmin && !workspaceId,
+        refetchOnMountOrArgChange: true,
+      },
     );
+
+  const platform = platformResult?.data as
+    | {
+        counts?: {
+          totalTasks?: number;
+          overdue?: number;
+          dueThisWeek?: number;
+          projects?: number;
+          workspaces?: number;
+          users?: number;
+        };
+      }
+    | undefined;
 
   const summary = summaryResult?.data as
     | {
@@ -62,24 +89,31 @@ export default function OverviewPage() {
 
   const taskStats = normalizeTaskStats(statsResult?.data ?? statsResult);
   const total =
-    summary?.counts?.totalTasks ??
+    (isPlatformAdmin
+      ? platform?.counts?.totalTasks
+      : summary?.counts?.totalTasks) ??
     taskStats.reduce((sum, s) => sum + (s.count || 0), 0);
-  const showSkeleton = (isLoading || summaryLoading) && !statsResult;
+  const showSkeleton =
+    (isLoading || summaryLoading || platformLoading) && !statsResult;
 
   return (
     <div className="dash-enter px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            Dashboard ·{" "}
+            {isPlatformAdmin ? "Platform · " : "Dashboard · "}
             {billing?.isFreeProduct !== false
               ? "Free forever"
               : billing?.currentPlan || "Plan"}
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-            Overview
+            {isPlatformAdmin ? "Admin overview" : "Overview"}
           </h1>
-          {workspace ? (
+          {isPlatformAdmin ? (
+            <p className="mt-1 truncate text-sm text-muted">
+              All workspaces · product-wide pipeline and accounts
+            </p>
+          ) : workspace ? (
             <p className="mt-1 truncate text-sm text-muted">
               {workspace.name}
               {" · "}
@@ -114,7 +148,13 @@ export default function OverviewPage() {
       </div>
 
       <div className="mb-5 rounded-2xl border border-ink/10 bg-white px-4 py-3.5 text-sm text-muted">
-        {workspace?.isPersonal ? (
+        {isPlatformAdmin ? (
+          <p>
+            <span className="font-semibold text-ink">Platform administrator</span>{" "}
+            — charts and totals include every workspace. Managers and members
+            only see data inside workspaces they belong to.
+          </p>
+        ) : workspace?.isPersonal ? (
           <p>
             <span className="font-semibold text-ink">Personal workspace</span> —
             your private board. Create a{" "}
@@ -157,31 +197,64 @@ export default function OverviewPage() {
       )}
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "In pipeline", value: total, hint: "All stages", href: "/dashboard/todo-list" },
-          {
-            label: "Assigned to me",
-            value: summary?.counts?.myTasks ?? "—",
-            hint: "Your tasks",
-            href: "/dashboard/my-work",
-          },
-          {
-            label: "Overdue",
-            value: summary?.counts?.overdue ?? "—",
-            hint: canManage ? "Team past due" : "Your past due",
-            href: canManage
-              ? "/dashboard/manage-tasks?view=overdue"
-              : "/dashboard/my-work",
-          },
-          {
-            label: "Due this week",
-            value: summary?.counts?.dueThisWeek ?? "—",
-            hint: "Next 7 days",
-            href: canManage
-              ? "/dashboard/manage-tasks?view=week"
-              : "/dashboard/my-work",
-          },
-        ].map((item) => (
+        {(isPlatformAdmin
+          ? [
+              {
+                label: "All tasks",
+                value: total,
+                hint: "Every workspace",
+                href: "/dashboard/manage-tasks",
+              },
+              {
+                label: "Workspaces",
+                value: platform?.counts?.workspaces ?? "—",
+                hint: "Active spaces",
+                href: "/dashboard/workspace",
+              },
+              {
+                label: "Users",
+                value: platform?.counts?.users ?? "—",
+                hint: "Accounts",
+                href: "/dashboard/members",
+              },
+              {
+                label: "Overdue",
+                value: platform?.counts?.overdue ?? "—",
+                hint: "Across product",
+                href: "/dashboard/manage-tasks?view=overdue",
+              },
+            ]
+          : [
+              {
+                label: "In pipeline",
+                value: total,
+                hint: "All stages",
+                href: "/dashboard/todo-list",
+              },
+              {
+                label: "Assigned to me",
+                value: summary?.counts?.myTasks ?? "—",
+                hint: "Your tasks",
+                href: "/dashboard/my-work",
+              },
+              {
+                label: "Overdue",
+                value: summary?.counts?.overdue ?? "—",
+                hint: canManage ? "Team past due" : "Your past due",
+                href: canManage
+                  ? "/dashboard/manage-tasks?view=overdue"
+                  : "/dashboard/my-work",
+              },
+              {
+                label: "Due this week",
+                value: summary?.counts?.dueThisWeek ?? "—",
+                hint: "Next 7 days",
+                href: canManage
+                  ? "/dashboard/manage-tasks?view=week"
+                  : "/dashboard/my-work",
+              },
+            ]
+        ).map((item) => (
           <Link
             key={item.label}
             href={item.href}
@@ -245,7 +318,7 @@ export default function OverviewPage() {
         </p>
       ) : null}
 
-      <Charts workspaceId={workspaceId} />
+      <Charts workspaceId={workspaceId} platformScope={isPlatformAdmin} />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   TWorkspaceRole,
   useGetMyWorkspacesQuery,
 } from "@/redux/api/workspaceApi";
+import { useGetMyProfileQuery } from "@/redux/api/authApi";
 import { extractList } from "@/lib/taskStats";
 import { getClientToken } from "@/lib/auth/cookies.client";
 import { AUTH_CHANGED_EVENT } from "@/lib/auth/token";
@@ -30,6 +31,8 @@ type WorkspaceContextValue = {
   canAssign: boolean;
   /** Workspace owner (DB admin) — settings / ownership */
   isAdmin: boolean;
+  /** Platform operator (admin / super_admin) — sees org-wide data */
+  isPlatformAdmin: boolean;
   /** Can invite people to this workspace (manager+ on a team workspace) */
   canInvite: boolean;
   /** Team (non-personal) workspace */
@@ -51,6 +54,7 @@ const EMPTY: WorkspaceContextValue = {
   canManage: false,
   canAssign: false,
   isAdmin: false,
+  isPlatformAdmin: false,
   canInvite: false,
   isTeamWorkspace: false,
   refetchWorkspaces: () => undefined,
@@ -74,6 +78,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, refetch } = useGetMyWorkspacesQuery(undefined, {
     skip: !hasToken,
   });
+  const { data: profileResult } = useGetMyProfileQuery(undefined, {
+    skip: !hasToken,
+  });
+  const platformRole = (
+    profileResult?.data as { role?: string } | undefined
+  )?.role;
+  const isPlatformAdmin =
+    platformRole === "admin" || platformRole === "super_admin";
+
   const workspaces = useMemo(
     () => (hasToken ? extractList<IWorkspace>(data?.data ?? data) : []),
     [data, hasToken],
@@ -137,11 +150,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const role = (workspace?.membershipRole as TWorkspaceRole | undefined) || null;
-  const isAdmin = role === "admin";
-  const canAssign = role === "admin" || role === "manager";
+  const isAdmin = role === "admin" || isPlatformAdmin;
+  const canAssign = isPlatformAdmin || role === "admin" || role === "manager";
   const canManage = canAssign;
   const isTeamWorkspace = Boolean(workspace && !workspace.isPersonal);
-  const canInvite = canManage && isTeamWorkspace;
+  const canInvite =
+    (isPlatformAdmin || canManage) && isTeamWorkspace;
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
@@ -154,6 +168,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       canManage,
       canAssign,
       isAdmin,
+      isPlatformAdmin,
       canInvite,
       isTeamWorkspace,
       refetchWorkspaces: () => {
@@ -171,6 +186,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       canManage,
       canAssign,
       isAdmin,
+      isPlatformAdmin,
       canInvite,
       isTeamWorkspace,
       refetch,

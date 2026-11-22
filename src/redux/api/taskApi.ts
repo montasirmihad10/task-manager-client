@@ -199,7 +199,14 @@ const taskApi = baseApi.injectEndpoints({
     }),
 
     getTaskStats: build.query({
-      query: (params?: { email?: string; workspaceId?: string } | void) => ({
+      query: (
+        params?: {
+          email?: string;
+          workspaceId?: string;
+          /** Platform admins: product-wide pipeline */
+          scope?: "platform" | "workspace";
+        } | void,
+      ) => ({
         url: "/tasks/stats",
         method: "GET",
         params: params || undefined,

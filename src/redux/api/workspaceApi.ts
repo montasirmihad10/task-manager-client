@@ -241,6 +241,12 @@ const workspaceApi = baseApi.injectEndpoints({
       providesTags: ["Dashboard", "Task"],
     }),
 
+    /** Platform admin — org-wide totals (not workspace-scoped) */
+    getPlatformSummary: build.query({
+      query: () => ({ url: "/dashboard/platform", method: "GET" }),
+      providesTags: ["Dashboard", "Task", "Workspace"],
+    }),
+
     getBillingStatus: build.query({
       query: () => ({ url: "/billing/status", method: "GET" }),
       providesTags: ["Billing"],
@@ -266,6 +272,7 @@ export const {
   useListInvitesQuery,
   useGetDashboardMeQuery,
   useGetWorkspaceSummaryQuery,
+  useGetPlatformSummaryQuery,
   useGetBillingStatusQuery,
 } = workspaceApi;
 
