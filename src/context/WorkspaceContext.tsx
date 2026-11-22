@@ -86,17 +86,41 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setWorkspaceIdState(null);
       return;
     }
+
+    const pickDefaultId = () => {
+      // Prefer team boards (charts / overview are empty on brand-new personal boards)
+      const team =
+        workspaces.find((w) => !w.isPersonal && /acme/i.test(w.name || "")) ||
+        workspaces.find((w) => !w.isPersonal);
+      return (team || workspaces[0])._id;
+    };
+
     const stored =
       typeof window !== "undefined"
         ? localStorage.getItem(STORAGE_KEY)
         : null;
-    const validStored = stored && workspaces.some((w) => w._id === stored);
-    if (validStored) {
-      setWorkspaceIdState(stored);
+    const storedWs = stored
+      ? workspaces.find((w) => w._id === stored)
+      : undefined;
+
+    if (storedWs) {
+      // If a stale personal board is stored but a team board exists, open the team
+      const team = workspaces.find((w) => !w.isPersonal);
+      if (storedWs.isPersonal && team) {
+        setWorkspaceIdState(team._id);
+        localStorage.setItem(STORAGE_KEY, team._id);
+        return;
+      }
+      setWorkspaceIdState(storedWs._id);
       return;
     }
+
     if (!workspaceId || !workspaces.some((w) => w._id === workspaceId)) {
-      setWorkspaceIdState(workspaces[0]._id);
+      const next = pickDefaultId();
+      setWorkspaceIdState(next);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY, next);
+      }
     }
   }, [workspaces, workspaceId]);
 
