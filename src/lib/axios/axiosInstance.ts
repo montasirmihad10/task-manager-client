@@ -1,8 +1,10 @@
 import { TResponse } from "@/types";
 import axios from "axios";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
+import { envConfig } from "@/config/envConfig";
 
 const axiosInstance = axios.create({
+  baseURL: envConfig.baseApi || undefined,
   timeout: 60000,
   withCredentials: true,
   headers: {
@@ -42,6 +44,14 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    // Preserve binary downloads (CSV export, etc.)
+    if (
+      response.config.responseType === "blob" ||
+      response.config.responseType === "arraybuffer"
+    ) {
+      return response;
+    }
+
     const responseObject: TResponse = {
       data: response?.data,
       meta: response?.data?.meta,

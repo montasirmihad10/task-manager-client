@@ -75,6 +75,13 @@ const UseSelect = ({
             loading={loading}
             showSearch={showSearch}
             onSearch={onSearch}
+            getPopupContainer={() => document.body}
+            popupMatchSelectWidth={false}
+            styles={{
+              popup: {
+                root: { zIndex: 1100 },
+              },
+            }}
             filterOption={
               showSearch
                 ? (input, option) =>

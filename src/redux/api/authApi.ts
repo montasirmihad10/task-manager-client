@@ -87,6 +87,35 @@ const authApi = baseApi.injectEndpoints({
       }),
       providesTags: ["auth", "user"],
     }),
+
+    /** Update name / phone / avatar (multipart: data JSON + optional image) */
+    editMyProfile: build.mutation({
+      query: ({
+        name,
+        phone,
+        image,
+      }: {
+        name?: string;
+        phone?: string;
+        image?: File | null;
+      }) => {
+        const form = new FormData();
+        form.append(
+          "data",
+          JSON.stringify({
+            ...(name !== undefined ? { name } : {}),
+            ...(phone !== undefined ? { phone } : {}),
+          }),
+        );
+        if (image) form.append("image", image);
+        return {
+          url: "/users/edit-profile",
+          method: "PATCH",
+          data: form,
+        };
+      },
+      invalidatesTags: ["auth", "user"],
+    }),
   }),
 });
 
@@ -100,4 +129,5 @@ export const {
   useChangePasswordMutation,
   useResendOtpMutation,
   useGetMyProfileQuery,
+  useEditMyProfileMutation,
 } = authApi;

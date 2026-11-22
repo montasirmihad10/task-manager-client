@@ -1,9 +1,7 @@
 import { axiosInstance } from "@/lib/axios/axiosInstance";
-import { envConfig } from "@/config/envConfig";
 
 export async function exportTasksCsv(workspaceId: string) {
-  const base = (envConfig.baseApi || "").replace(/\/$/, "");
-  const res = await axiosInstance.get(`${base}/tasks/export.csv`, {
+  const res = await axiosInstance.get("/tasks/export.csv", {
     params: { workspaceId },
     responseType: "blob",
     headers: { Accept: "text/csv" },

@@ -242,7 +242,7 @@ export function WorkspaceSwitcher({ dark = true }: { dark?: boolean }) {
             <div
               role="listbox"
               aria-labelledby="workspace-switcher"
-              className={`absolute left-0 right-0 z-50 mt-1 max-h-[min(18rem,50dvh)] overflow-y-auto overscroll-contain rounded-2xl border p-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.35)] ${
+              className={`absolute left-0 right-0 z-[70] mt-1 max-h-[min(18rem,50dvh)] overflow-y-auto overscroll-contain rounded-2xl border p-1.5 shadow-[0_18px_40px_rgba(0,0,0,0.35)] ${
                 dark
                   ? "border-white/15 bg-ink-soft"
                   : "border-ink/10 bg-paper shadow-[0_18px_40px_rgba(16,20,24,0.16)]"

@@ -1,3 +1,5 @@
-export default function UserProfilePage() {
-  return <main>User Profile Page</main>;
+import { redirect } from "next/navigation";
+
+export default function UserProfileRedirect() {
+  redirect("/dashboard/account");
 }

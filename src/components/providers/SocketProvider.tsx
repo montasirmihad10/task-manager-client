@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
 import { getSocket, isSocketConfigured, resetSocket } from "@/lib/socket";
+import { AUTH_CHANGED_EVENT, getAccessToken } from "@/lib/auth/token";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -21,28 +22,45 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!isSocketConfigured()) return;
 
-    const instance = getSocket();
-    if (!instance) return;
+    const connectWithAuth = () => {
+      const token = getAccessToken();
+      if (!token) {
+        resetSocket();
+        setSocket(null);
+        setIsConnected(false);
+        return;
+      }
 
-    setSocket(instance);
+      const instance = getSocket();
+      if (!instance) return;
 
-    const handleConnect = () => setIsConnected(true);
-    const handleDisconnect = () => setIsConnected(false);
-    const handleConnectError = () => setIsConnected(false);
+      setSocket(instance);
 
-    instance.on("connect", handleConnect);
-    instance.on("disconnect", handleDisconnect);
-    instance.on("connect_error", handleConnectError);
+      const handleConnect = () => setIsConnected(true);
+      const handleDisconnect = () => setIsConnected(false);
+      const handleConnectError = () => setIsConnected(false);
 
-    if (!instance.connected) {
-      instance.connect();
-    }
-
-    return () => {
       instance.off("connect", handleConnect);
       instance.off("disconnect", handleDisconnect);
       instance.off("connect_error", handleConnectError);
+      instance.on("connect", handleConnect);
+      instance.on("disconnect", handleDisconnect);
+      instance.on("connect_error", handleConnectError);
+
+      if (instance.connected) {
+        instance.disconnect();
+      }
+      instance.connect();
+    };
+
+    connectWithAuth();
+    window.addEventListener(AUTH_CHANGED_EVENT, connectWithAuth);
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, connectWithAuth);
       resetSocket();
+      setSocket(null);
+      setIsConnected(false);
     };
   }, []);
 

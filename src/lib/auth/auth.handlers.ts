@@ -6,7 +6,6 @@ import {
 import { store } from "@/redux/store";
 import { baseApi } from "@/redux/api/baseApi";
 import { axiosInstance } from "@/lib/axios/axiosInstance";
-import { envConfig } from "@/config/envConfig";
 
 export function handleLoginSuccess(tokenOrPayload: string | unknown): void {
   const token =
@@ -23,7 +22,7 @@ export function handleLoginSuccess(tokenOrPayload: string | unknown): void {
 
 export async function handleLogout(): Promise<void> {
   try {
-    await axiosInstance.post(`${envConfig.baseApi}/auth/logout`, {});
+    await axiosInstance.post("/auth/logout", {});
   } catch {
     // still clear local session
   }

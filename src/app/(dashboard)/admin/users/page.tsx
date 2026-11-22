@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function AdminUsersPage() {
-  return <main>Admin Users Page</main>;
+  redirect("/dashboard/account");
 }

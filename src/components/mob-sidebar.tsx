@@ -64,7 +64,8 @@ export function MobSidebar() {
     { href: "/dashboard/members", label: "Members", icon: Users2Icon },
     { href: "/dashboard/notifications", label: "Inbox", icon: Bell },
     { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-    { href: "/dashboard/workspace", label: "Settings", icon: Settings2 },
+    { href: "/dashboard/workspace", label: "Workspace", icon: Settings2 },
+    { href: "/dashboard/account", label: "Account", icon: UserRound },
     { href: "/dashboard/plan", label: "Plan", icon: BadgeDollarSign },
   ];
 
@@ -129,6 +130,13 @@ export function MobSidebar() {
             </p>
           </div>
           <NotificationBell />
+          <Link
+            href="/dashboard/account"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-ink/15 bg-paper text-ink"
+            aria-label="Account"
+          >
+            <UserRound size={18} />
+          </Link>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
@@ -167,7 +175,7 @@ export function MobSidebar() {
           </button>
         </div>
 
-        <div className="space-y-2 px-3 pb-3">
+        <div className="relative z-20 space-y-2 px-3 pb-3">
           <WorkspaceSwitcher dark />
           {canInvite ? (
             <Link
@@ -181,7 +189,7 @@ export function MobSidebar() {
           ) : null}
         </div>
 
-        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-3 pb-3">
+        <nav className="hide-scrollbar flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-3 pb-3">
           {[
             ...links,
             ...(isPlatformAdmin

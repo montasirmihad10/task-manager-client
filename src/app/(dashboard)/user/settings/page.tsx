@@ -1,3 +1,5 @@
-export default function UserSettingsPage() {
-  return <main>User Settings Page</main>;
+import { redirect } from "next/navigation";
+
+export default function UserSettingsRedirect() {
+  redirect("/dashboard/account");
 }

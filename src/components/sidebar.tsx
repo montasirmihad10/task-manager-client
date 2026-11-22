@@ -20,6 +20,7 @@ import {
   Scale,
   Briefcase,
   UserPlus,
+  UserRound,
 } from "lucide-react";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { toast } from "sonner";
@@ -55,7 +56,8 @@ export function Sidebar() {
     { href: "/dashboard/members", label: "Members", icon: Users2Icon },
     { href: "/dashboard/notifications", label: "Inbox", icon: Bell },
     { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-    { href: "/dashboard/workspace", label: "Settings", icon: Settings2 },
+    { href: "/dashboard/workspace", label: "Workspace", icon: Settings2 },
+    { href: "/dashboard/account", label: "Account", icon: UserRound },
     { href: "/dashboard/plan", label: "Plan", icon: BadgeDollarSign },
   ];
   const planLabel =
@@ -80,7 +82,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex h-full w-full flex-col overflow-hidden border-r border-white/10 bg-ink text-paper">
+    <aside className="flex h-full w-full flex-col border-r border-white/10 bg-ink text-paper">
       <div className="flex shrink-0 items-center gap-2.5 px-5 py-5">
         <BrandMark
           href="/dashboard/overview"
@@ -98,7 +100,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div className="shrink-0 space-y-2 px-3 pb-3">
+      <div className="relative z-20 shrink-0 space-y-2 px-3 pb-3">
         <WorkspaceSwitcher dark />
         {canInvite ? (
           <Link
@@ -111,7 +113,7 @@ export function Sidebar() {
         ) : null}
       </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3">
+      <nav className="hide-scrollbar flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3">
         {[
           ...links,
           ...(isPlatformAdmin
